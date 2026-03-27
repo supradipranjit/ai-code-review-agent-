@@ -1,0 +1,18 @@
+SECURITY GUIDELINES:
+- Avoid SQL injection by using parameterized queries
+- Do not concatenate user input directly into queries
+- Validate and sanitize all inputs
+- Avoid hardcoding sensitive data (passwords, API keys)
+
+PERFORMANCE GUIDELINES:
+- Avoid unnecessary loops
+- Use efficient data structures
+- Avoid repeated database calls inside loops
+- Optimize large computations
+
+STYLE GUIDELINES:
+- Use meaningful variable names
+- Follow consistent indentation
+- Keep functions small and readable
+- Add comments where necessary
+- Follow PEP8 standards

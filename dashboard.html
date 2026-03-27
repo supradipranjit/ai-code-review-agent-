@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>AI Code Review Dashboard</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Segoe UI', sans-serif; background: #0f172a; color: #e2e8f0; min-height: 100vh; padding: 24px; }
+    h1 { text-align: center; font-size: 1.8rem; margin-bottom: 8px; color: #f8fafc; }
+    p.subtitle { text-align: center; color: #94a3b8; margin-bottom: 32px; }
+    .cards { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; margin-bottom: 32px; }
+    .card { background: #1e293b; border-radius: 12px; padding: 24px 32px; text-align: center; min-width: 160px; }
+    .card .value { font-size: 2.4rem; font-weight: 700; color: #38bdf8; }
+    .card .label { font-size: 0.85rem; color: #94a3b8; margin-top: 4px; }
+    .charts { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 24px; max-width: 1100px; margin: 0 auto; }
+    .chart-box { background: #1e293b; border-radius: 12px; padding: 24px; }
+    .chart-box h2 { font-size: 1rem; color: #cbd5e1; margin-bottom: 16px; }
+    canvas { max-height: 280px; }
+  </style>
+</head>
+<body>
+  <h1>AI Code Review Dashboard</h1>
+  <p class="subtitle">Live stats from your GitHub PR reviews</p>
+
+  <div class="cards">
+    <div class="card"><div class="value" id="total">—</div><div class="label">Total Issues</div></div>
+    <div class="card"><div class="value" id="high" style="color:#f87171">—</div><div class="label">High Severity</div></div>
+    <div class="card"><div class="value" id="medium" style="color:#fbbf24">—</div><div class="label">Medium Severity</div></div>
+    <div class="card"><div class="value" id="low" style="color:#4ade80">—</div><div class="label">Low Severity</div></div>
+  </div>
+
+  <div class="charts">
+    <div class="chart-box">
+      <h2>Issues by Severity</h2>
+      <canvas id="severityChart"></canvas>
+    </div>
+    <div class="chart-box">
+      <h2>Issues by Agent</h2>
+      <canvas id="agentChart"></canvas>
+    </div>
+    <div class="chart-box">
+      <h2>Issues per PR</h2>
+      <canvas id="prChart"></canvas>
+    </div>
+  </div>
+
+  <script>
+    async function loadStats() {
+      const res = await fetch("/api/stats");
+      const data = await res.json();
+
+      document.getElementById("total").textContent = data.total_issues;
+      document.getElementById("high").textContent = data.by_severity.HIGH || 0;
+      document.getElementById("medium").textContent = data.by_severity.MEDIUM || 0;
+      document.getElementById("low").textContent = data.by_severity.LOW || 0;
+
+      new Chart(document.getElementById("severityChart"), {
+        type: "pie",
+        data: {
+          labels: ["HIGH", "MEDIUM", "LOW"],
+          datasets: [{
+            data: [data.by_severity.HIGH || 0, data.by_severity.MEDIUM || 0, data.by_severity.LOW || 0],
+            backgroundColor: ["#f87171", "#fbbf24", "#4ade80"]
+          }]
+        },
+        options: { plugins: { legend: { labels: { color: "#e2e8f0" } } } }
+      });
+
+      new Chart(document.getElementById("agentChart"), {
+        type: "bar",
+        data: {
+          labels: Object.keys(data.by_agent),
+          datasets: [{
+            label: "Issues",
+            data: Object.values(data.by_agent),
+            backgroundColor: ["#38bdf8", "#818cf8", "#fb923c"]
+          }]
+        },
+        options: {
+          plugins: { legend: { display: false } },
+          scales: {
+            x: { ticks: { color: "#94a3b8" }, grid: { color: "#334155" } },
+            y: { ticks: { color: "#94a3b8" }, grid: { color: "#334155" }, beginAtZero: true }
+          }
+        }
+      });
+
+      new Chart(document.getElementById("prChart"), {
+        type: "bar",
+        data: {
+          labels: Object.keys(data.by_pr),
+          datasets: [{
+            label: "Issues",
+            data: Object.values(data.by_pr),
+            backgroundColor: "#a78bfa"
+          }]
+        },
+        options: {
+          plugins: { legend: { display: false } },
+          scales: {
+            x: { ticks: { color: "#94a3b8" }, grid: { color: "#334155" } },
+            y: { ticks: { color: "#94a3b8" }, grid: { color: "#334155" }, beginAtZero: true }
+          }
+        }
+      });
+    }
+
+    loadStats();
+    setInterval(loadStats, 30000); // auto-refresh every 30s
+  </script>
+</body>
+</html>
