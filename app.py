@@ -67,6 +67,14 @@ def stats():
         db.close()
 
 
+# ✅ FIXED: Properly placed bug route (OUTSIDE webhook)
+@app.get("/test-bug")
+def test_bug(user_id: str):
+    # ❌ Intentional vulnerability for demo
+    query = "SELECT * FROM users WHERE id = " + user_id
+    return {"query": query}
+
+
 def extract_code_from_diff(diff_text):
     code_lines = []
     for line in diff_text.split("\n"):
@@ -211,7 +219,6 @@ async def webhook(request: Request):
     changed_files = get_changed_files(diff_text)
     file_path = changed_files[0] if changed_files else "unknown"
 
-    # Save to DB
     save_to_db(
         repo_name=f"{meta['owner']}/{meta['repo']}",
         pull_number=meta["pull_number"],
@@ -220,7 +227,6 @@ async def webhook(request: Request):
         file_path=file_path
     )
 
-    # Post inline GitHub PR comments
     try:
         findings_by_chunk = []
         idx = 0
@@ -245,8 +251,3 @@ async def webhook(request: Request):
         sys.stdout.flush()
 
     return {"status": "processed", "final_results": final_results}
-    @app.get("/test-bug")
-def test_bug(user_id: str):
-    # ❌ Intentional vulnerability for demo
-    query = "SELECT * FROM users WHERE id = " + user_id
-    return {"query": query}
