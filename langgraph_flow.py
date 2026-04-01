@@ -1,7 +1,10 @@
+import logging
 from langgraph.graph import StateGraph
 from agents import analyze_code
 from orchestrator import orchestrate_results
 from typing import TypedDict, Any
+
+logger = logging.getLogger(__name__)
 
 try:
     with open("guidelines.txt", "r", encoding="utf-8") as f:
@@ -22,21 +25,21 @@ class GraphState(TypedDict, total=False):
 def security_node(state: GraphState) -> GraphState:
     code = state["chunk"]["code"]
     result = analyze_code("security", code, GUIDELINES)
-    print("SECURITY RESULT:", result)
+    logger.info(f"  Security agent done ({len(result)} chars)")
     return {"security": result or ""}
 
 
 def performance_node(state: GraphState) -> GraphState:
     code = state["chunk"]["code"]
     result = analyze_code("performance", code, GUIDELINES)
-    print("PERFORMANCE RESULT:", result)
+    logger.info(f"  Performance agent done ({len(result)} chars)")
     return {"performance": result or ""}
 
 
 def style_node(state: GraphState) -> GraphState:
     code = state["chunk"]["code"]
     result = analyze_code("style", code, GUIDELINES)
-    print("STYLE RESULT:", result)
+    logger.info(f"  Style agent done ({len(result)} chars)")
     return {"style": result or ""}
 
 

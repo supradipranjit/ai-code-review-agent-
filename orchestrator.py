@@ -38,15 +38,18 @@ def parse_llm_output(output):
         return output, "No fix found"
 
 
+SEVERITY_RANK = {"HIGH": 3, "MEDIUM": 2, "LOW": 1}
+
+
 def deduplicate(findings: list) -> list:
-    seen = set()
-    unique = []
+    """Keep highest severity when same agent reports same issue on same line."""
+    best = {}
     for f in findings:
-        key = (f["agent"], f["problem"].lower().strip()[:80])
-        if key not in seen:
-            seen.add(key)
-            unique.append(f)
-    return unique
+        key = (f["agent"], f.get("start_line", 0), f["problem"].lower().strip()[:60])
+        existing = best.get(key)
+        if not existing or SEVERITY_RANK.get(f["severity"], 0) > SEVERITY_RANK.get(existing["severity"], 0):
+            best[key] = f
+    return list(best.values())
 
 
 def orchestrate_results(results):
