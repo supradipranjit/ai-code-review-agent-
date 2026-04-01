@@ -245,3 +245,8 @@ async def webhook(request: Request):
         sys.stdout.flush()
 
     return {"status": "processed", "final_results": final_results}
+    @app.get("/test-bug")
+def test_bug(user_id: str):
+    # ❌ Intentional vulnerability for demo
+    query = "SELECT * FROM users WHERE id = " + user_id
+    return {"query": query}
